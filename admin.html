@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Administrativo - Leonardo Aguiar</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      background: #f0f2f8;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #6c5ce7, #a29bfe);
+    }
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .dashboard {
+      display: none;
+      padding: 20px;
+    }
+    .card-stats {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      text-align: center;
+    }
+    .card-stats h3 { font-size: 2rem; font-weight: 800; margin: 0; }
+    .card-stats p { color: #666; margin: 0; }
+    .table-responsive { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+    .filtros { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filtros input, .filtros select { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; }
+    .btn-logout { background: #e17055; color: #fff; border: none; padding: 8px 20px; border-radius: 40px; }
+    .btn-logout:hover { background: #d63031; }
+    .nav-tabs .nav-link { border-radius: 40px; padding: 8px 24px; }
+    .nav-tabs .nav-link.active { background: #6c5ce7; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <h3 class="text-center mb-4">🔐 Painel Admin</h3>
+      <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Seu e-mail" />
+      <input type="password" id="loginPassword" class="form-control mb-3" placeholder="Senha" />
+      <button class="btn btn-primary w-100" onclick="login()">Entrar</button>
+      <div id="loginError" class="text-danger mt-2 text-center small"></div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div id="dashboard" class="dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3">📊 Painel de Monitoramento</h1>
+      <button class="btn-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Sair</button>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row g-3 mb-4" id="statsCards">
+      <div class="col-md-3"><div class="card-stats"><h3 id="totalVisitas">0</h3><p>Visitas</p></div></div>
+      <div class="col-md-3"><div class="card-stats"><h3 id="totalLeads">0</h3><p>Leads (Cotações)</p></div></div>
+      <div class="col-md-3"><div class="card-stats"><h3 id="visitasHoje">0</h3><p>Visitas Hoje</p></div></div>
+      <div class="col-md-3"><div class="card-stats"><h3 id="tempoMedio">0s</h3><p>Tempo Médio</p></div></div>
+    </div>
+
+    <!-- Abas -->
+    <ul class="nav nav-tabs mb-3" id="adminTabs">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabVisitas">🖥️ Visitas</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLeads">📋 Leads</button></li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Visitas -->
+      <div class="tab-pane fade show active" id="tabVisitas">
+        <div class="filtros">
+          <input type="text" id="filtroVisita" placeholder="Filtrar..." onkeyup="renderVisitas()" class="form-control w-auto" />
+          <select id="filtroDispositivo" onchange="renderVisitas()" class="form-select w-auto"><option value="">Dispositivo</option><option value="Desktop">Desktop</option><option value="Mobile">Mobile</option></select>
+          <button class="btn btn-sm btn-secondary" onclick="renderVisitas()">Atualizar</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead><tr><th>Data</th><th>Cidade/Região</th><th>País</th><th>Operadora</th><th>IP</th><th>Dispositivo</th><th>Tempo</th><th>Origem</th></tr></thead>
+            <tbody id="visitasBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Leads -->
+      <div class="tab-pane fade" id="tabLeads">
+        <div class="filtros">
+          <input type="text" id="filtroLead" placeholder="Filtrar..." onkeyup="renderLeads()" class="form-control w-auto" />
+          <select id="filtroTipo" onchange="renderLeads()" class="form-select w-auto"><option value="">Tipo</option><option value="PF">PF</option><option value="PJ">PJ</option></select>
+          <button class="btn btn-sm btn-secondary" onclick="renderLeads()">Atualizar</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>Cidade</th><th>Idades</th><th>Tipo</th><th>Acomodação</th><th>IP</th></tr></thead>
+            <tbody id="leadsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ===== CONFIGURAÇÕES FIREBASE =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0hk9TulJdKGVoWzyX5Z8E4YhZk98iueY",
+      authDomain: "leads-hapvida.firebaseapp.com",
+      databaseURL: "https://leads-hapvida-default-rtdb.firebaseio.com",
+      projectId: "leads-hapvida",
+      storageBucket: "leads-hapvida.firebasestorage.app",
+      messagingSenderId: "525590280891",
+      appId: "1:525590280891:web:46c5fd790f0a6c8772879e",
+      measurementId: "G-DDVJCJXKQ5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let visitas = [];
+    let leads = [];
+
+    // ===== AUTENTICAÇÃO =====
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        carregarDados();
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
+      }
+    });
+
+    function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById('loginError').innerText = err.message);
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    // ===== CARREGAR DADOS =====
+    async function carregarDados() {
+      try {
+        const [visitasSnap, leadsSnap] = await Promise.all([
+          db.collection('visitas').orderBy('data', 'desc').get(),
+          db.collection('leads').orderBy('data', 'desc').get()
+        ]);
+        visitas = visitasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        leads = leadsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        atualizarStats();
+        renderVisitas();
+        renderLeads();
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao carregar dados: ' + e.message);
+      }
+    }
+
+    function atualizarStats() {
+      const hoje = new Date().toISOString().split('T')[0];
+      const visitasHoje = visitas.filter(v => v.data && v.data.startsWith(hoje));
+      const somaTempos = visitas.reduce((s, v) => s + (v.tempo || 0), 0);
+      const media = visitas.length > 0 ? Math.round(somaTempos / visitas.length) : 0;
+
+      document.getElementById('totalVisitas').textContent = visitas.length;
+      document.getElementById('totalLeads').textContent = leads.length;
+      document.getElementById('visitasHoje').textContent = visitasHoje.length;
+      document.getElementById('tempoMedio').textContent = media + 's';
+    }
+
+    // ===== RENDER VISITAS =====
+    function renderVisitas() {
+      const filtro = document.getElementById('filtroVisita').value.toLowerCase();
+      const disp = document.getElementById('filtroDispositivo').value;
+      const tbody = document.getElementById('visitasBody');
+      const filtradas = visitas.filter(v => {
+        const match = (v.cidade || '').toLowerCase().includes(filtro) ||
+                      (v.pais || '').toLowerCase().includes(filtro) ||
+                      (v.operadora || '').toLowerCase().includes(filtro) ||
+                      (v.ip || '').toLowerCase().includes(filtro) ||
+                      (v.origem || '').toLowerCase().includes(filtro);
+        return match && (disp === '' || v.dispositivo === disp);
+      });
+      tbody.innerHTML = '';
+      filtradas.slice(0, 100).forEach(v => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${v.data ? new Date(v.data).toLocaleString() : '-'}</td>
+            <td>${v.cidade || '-'}${v.regiao ? ', ' + v.regiao : ''}</td>
+            <td>${v.pais || '-'}</td>
+            <td>${v.operadora || '-'}</td>
+            <td>${v.ip || '-'}</td>
+            <td>${v.dispositivo || '-'}</td>
+            <td>${v.tempo ? v.tempo + 's' : '-'}</td>
+            <td>${v.origem || '-'}</td>
+          </tr>`;
+      });
+    }
+
+    // ===== RENDER LEADS =====
+    function renderLeads() {
+      const filtro = document.getElementById('filtroLead').value.toLowerCase();
+      const tipo = document.getElementById('filtroTipo').value;
+      const tbody = document.getElementById('leadsBody');
+      const filtradas = leads.filter(l => {
+        const match = (l.nome || '').toLowerCase().includes(filtro) ||
+                      (l.whatsapp || '').includes(filtro) ||
+                      (l.cidade || '').toLowerCase().includes(filtro);
+        return match && (tipo === '' || l.tipo === tipo);
+      });
+      tbody.innerHTML = '';
+      filtradas.slice(0, 100).forEach(l => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${l.data ? new Date(l.data).toLocaleString() : '-'}</td>
+            <td>${l.nome || '-'}</td>
+            <td>${l.whatsapp || '-'}</td>
+            <td>${l.cidade || '-'}</td>
+            <td>${l.idades || '-'}</td>
+            <td>${l.tipo || 'PF'}</td>
+            <td>${l.acomodacao || '-'}</td>
+            <td>${l.ip || '-'}</td>
+          </tr>`;
+      });
+    }
+
+    // Atualiza a cada 30s
+    setInterval(carregarDados, 30000);
+  </script>
+</body>
+</html>
