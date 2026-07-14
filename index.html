@@ -19,7 +19,7 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', 'SEU_PIXEL_ID_AQUI'); // <-- Substitua pelo seu Pixel ID
+    fbq('init', 'SEU_PIXEL_ID_AQUI'); // <-- Substitua
     fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=SEU_PIXEL_ID_AQUI&ev=PageView&noscript=1" /></noscript>
@@ -623,7 +623,7 @@
     </div>
   </section>
 
-  <!-- ===== FORMULÁRIO SIMPLIFICADO (APENAS NOME + WHATSAPP) ===== -->
+  <!-- ===== FORMULÁRIO SIMPLIFICADO ===== -->
   <section class="secao" id="formulario">
     <div class="form-simplificado">
       <h3>📲 Receba sua cotação agora</h3>
@@ -670,7 +670,7 @@
     </div>
   </section>
 
-  <!-- ===== PROVA SOCIAL (DEPOIMENTOS DE EMPRESAS) ===== -->
+  <!-- ===== PROVA SOCIAL ===== -->
   <section class="secao" id="depoimentos">
     <h2>💬 O que nossos clientes empresariais dizem</h2>
     <p class="subtitle">Empresas que economizaram com a consultoria Leonardo Aguiar</p>
@@ -696,7 +696,7 @@
     </div>
   </section>
 
-  <!-- ===== VÍDEO DE APRESENTAÇÃO ===== -->
+  <!-- ===== VÍDEO ===== -->
   <section class="secao secao-bg">
     <h2>🎥 Conheça o Leonardo Aguiar</h2>
     <p class="subtitle">Especialista Hapvida NDI com mais de 5.000 clientes atendidos</p>
@@ -707,7 +707,7 @@
     <a href="#formulario" class="btn btn-whatsapp" style="margin-top:16px;">📲 Simular economia agora</a>
   </section>
 
-  <!-- ===== FAQ (Perguntas Frequentes) ===== -->
+  <!-- ===== FAQ ===== -->
   <section class="secao" id="faq">
     <h2>❓ Perguntas Frequentes</h2>
     <p class="subtitle">Tire suas dúvidas sobre planos empresariais e pessoa física</p>
@@ -800,16 +800,14 @@
   <script>
     // ---- CONFIGURAÇÕES FIREBASE ----
     const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyA0hk9TulJdKGVoWzyX5Z8E4YhZk98iueY",
-      authDomain: "leads-hapvida.firebaseapp.com",
-      databaseURL: "https://leads-hapvida-default-rtdb.firebaseio.com",
-      projectId: "leads-hapvida",
-      storageBucket: "leads-hapvida.firebasestorage.app",
-      messagingSenderId: "525590280891",
-      appId: "1:525590280891:web:46c5fd790f0a6c8772879e",
-      measurementId: "G-DDVJCJXKQ5"
+      apiKey: "AIzaSyDd5oKBdDK2d2100bSyr1x3X6f23msKulk",
+      authDomain: "consultoria-leonardo-aguiar.firebaseapp.com",
+      projectId: "consultoria-leonardo-aguiar",
+      storageBucket: "consultoria-leonardo-aguiar.firebasestorage.app",
+      messagingSenderId: "122431609465",
+      appId: "1:122431609465:web:0ee287a3c0abe04fb112a8",
+      measurementId: "G-FFG4M7P55J"
     };
-    // Inicializa Firebase (se já não estiver)
     if (!firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
     }
@@ -903,11 +901,9 @@
 
       if (!nome || !whatsapp) return alert('Preencha Nome e WhatsApp');
 
-      // 1. Registrar lead
       const leadData = { nome, whatsapp, origem: 'Formulário Site' };
       const sucesso = await window.capturarLeadCompleto(leadData);
 
-      // 2. Abrir WhatsApp
       const mensagem = `Olá Leonardo! Meu nome é ${nome} e quero receber a tabela de planos. Meu WhatsApp é ${whatsapp}.`;
       const numero = '5511926923328';
       const url = `https://api.whatsapp.com/send?phone=${numero}&text=${encodeURIComponent(mensagem)}`;
@@ -920,7 +916,6 @@
       document.getElementById('leadForm').reset();
     }
 
-    // ---- FUNÇÃO CAPTURAR LEAD WHATSAPP (para os botões) ----
     function capturarLeadWhatsApp(origem) {
       const mensagem = 'Olá Leonardo! Vi seu site e quero mais informações sobre os planos de saúde.';
       const numero = '5511926923328';
@@ -930,7 +925,7 @@
       window.open(url, '_blank');
     }
 
-    // ---- FUNÇÃO FILTRAR PLANOS ----
+    // ---- FILTRAR PLANOS ----
     let estadoAtual = 'sp';
     let categoriaAtual = 'todos';
 
@@ -962,7 +957,7 @@
       icone.classList.toggle('aberto');
     }
 
-    // ---- CONTADOR DE VAGAS (ESCASSEZ) ----
+    // ---- CONTADOR DE VAGAS ----
     let vagasRestantes = 12;
     function atualizarContador() {
       const counter = document.getElementById('counterVagas');
